@@ -1,2 +1,2 @@
 # experiment
-experimenting github actions
+experimenting github actions and branch rules
