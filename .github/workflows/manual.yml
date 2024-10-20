@@ -21,7 +21,7 @@ on:
         type: environment
         description: 'Environment to deploy'
         required: false
-        default: 'staging'
+        default: 'Test'
       
 
 
