@@ -1,0 +1,42 @@
+name: Pull-Request-Check
+
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - reopened
+      - ready_for_review
+
+jobs:
+  Audit-Pull-Request:
+    runs-on: [self-hosted, linux]
+
+    steps:
+    - name : Check Title
+      env:
+          TITLE: ${{ github.event.pull_request.title }}
+          JIRA_PREFIX: ${{ vars.JIRA_PREFIX }}
+      run: |
+        if [[ ${TITLE} =~ ^(${JIRA_PREFIX})-[0-9]{1,6}( ).*$ ]]; 
+        then 
+            JIRA_TICKET=$(echo ${TITLE} | awk '{print $1}')
+            echo "JIRA_TICKET=${JIRA_TICKET}" >> $GITHUB_ENV
+            echo "Valid PR title with ticket number: ${JIRA_TICKET}."
+        else
+            echo "::error::Not valid PR title. Must follow pattern: ^(${JIRA_PREFIX})-[0-9]{1,6} .*$."
+            exit 1
+        fi
+    - name: Final Check
+      if: failed()
+      env: 
+          BRANCH_NAME: ${{github.ref_name}}
+      run: |
+        if [[ ${BRANCH_NAME} =~ ^release\/\d*\.\d*\.\d*\.\d*$ ]];
+        then
+            echo "Skipping check due to release branch"
+        else
+            exit 1
+        fi
+      
+   
