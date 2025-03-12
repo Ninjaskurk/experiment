@@ -33,9 +33,9 @@ jobs:
       - name: Create Pull Request using GitHub CLI
         id: create_pr
         run: |
-          run: gh pr create -B base_branch -H branch_to_merge --title 'Merge branch_to_merge into base_branch' --body 'Created by Github action'
-   
-          PR_URL=$(gh pr create --head "${{ env.latest_branch }}" --base main \
+          PR_URL=$(gh pr create \
+            --head "${{ env.latest_branch }}" \
+            --base main \
             --title "Merge ${{ env.latest_branch }} into main" \
             --body "Automated PR to merge the latest release branch into main." \
             --label "auto-merge")
