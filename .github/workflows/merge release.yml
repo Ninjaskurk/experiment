@@ -54,10 +54,7 @@ jobs:
               body: "This PR was created automatically by GitHub Actions."
             });
             console.log(`Pull request created successfully: ${pull.html_url}`);
-            core.setOutput("pr_url", pull.html_url);
             echo "PULL_REQUEST=${pull.html_url}" >> $GITHUB_ENV
-
-
 
       - name: Auto-merge PR if checks pass
         if: env.pr_number != ''
