@@ -46,7 +46,7 @@ jobs:
             const { owner, repo } = context.repo;
             const base = "main";
             const head = "${{ env.LATEST_RELEASE }}";
-            console.log(${head});
+            console.log("${head}");
             const { data: pull } = await github.rest.pulls.create({
               owner,
               repo,
