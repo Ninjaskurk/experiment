@@ -35,7 +35,7 @@ jobs:
       - name: Get Current Release
         run: |
           LATEST_RELEASE=$(echo "${{steps.branches.outputs.result}}" | grep -o 'release/[0-9]*\.[0-9]*\.[0-9]*\.[0-9]' | sort --version-sort | tail -n1 | grep -o '[0-9]*\.[0-9]*\.[0-9]*\.[0-9]')
-          echo "LATEST_RELEASE=${LATEST_RELEASE}" >> $GITHUB_ENV
+          echo "LATEST_RELEASE_BRANCH=release/${LATEST_RELEASE}" >> $GITHUB_ENV
 
       - name: Create Pull Request
         uses: actions/github-script@v7
@@ -45,8 +45,8 @@ jobs:
           script: |
             const { owner, repo } = context.repo;
             const base = "main";
-            const head = "${{ env.LATEST_RELEASE }}";
-            console.log("${head}");
+            const head = "${{ env.LATEST_RELEASE_BRANCH }}";
+            console.log(`${head}`);
             const { data: pull } = await github.rest.pulls.create({
               owner,
               repo,
