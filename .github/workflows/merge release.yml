@@ -15,6 +15,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Install GitHub CLI
+        run: |
+          sudo apt update && sudo apt install -y gh
+
+      - name: Authenticate with GitHub CLI
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+
       - name: Get latest release branch
         id: get_latest_release
         run: |
@@ -22,20 +30,18 @@ jobs:
           echo "Latest release branch: $LATEST_BRANCH"
           echo "latest_branch=$LATEST_BRANCH" >> $GITHUB_ENV
 
-      - name: Create PR
+      - name: Create Pull Request using GitHub CLI
         id: create_pr
-        uses: peter-evans/create-pull-request@v6
-        with:
-          branch: ${{ env.latest_branch }}
-          base: main
-          title: "Merge ${{ env.latest_branch }} into main"
-          body: "Automated PR to merge the latest release branch into main."
-          labels: auto-merge
-          draft: false
-
-      - name: Enable auto-merge
-        if: steps.create_pr.outputs.pull-request-number
         run: |
-          gh pr merge ${{ steps.create_pr.outputs.pull-request-number }} --auto --squash
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL=$(gh pr create --head "${{ env.latest_branch }}" --base main \
+            --title "Merge ${{ env.latest_branch }} into main" \
+            --body "Automated PR to merge the latest release branch into main." \
+            --label "auto-merge" --json number -q ".number")
+          
+          echo "Pull request created: $PR_URL"
+          echo "pr_number=$PR_URL" >> $GITHUB_ENV
+
+      - name: Auto-merge PR if checks pass
+        if: env.pr_number != ''
+        run: |
+          gh pr merge ${{ env.pr_number }} --auto --squash
