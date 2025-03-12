@@ -12,29 +12,36 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Install GitHub CLI
+      - name: Get Branches
+        uses: actions/github-script@v7
+        id: branches
+        with:
+          result-encoding: string
+          script: |
+            const branches = await github.rest.git.listMatchingRefs({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: 'heads/release/',
+            });
+            const regex = new RegExp("^.*(release\/[0-9]+.[0-9]+.[0-9]+.[0-9]+)$");
+            let result = "";
+            branches.data.forEach((branch) => {
+              const match = branch.ref.match(regex);
+              if (match != null) {
+                result += match[1] + '\n';
+              }
+            });
+            return result;
+      - name: Get Current Release
         run: |
-          sudo apt update && sudo apt install -y gh
-
-      - name: Authenticate with GitHub CLI
-        run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
-
-      - name: Get latest release branch
-        id: get_latest_release
-        run: |
-          LATEST_BRANCH=$(git branch -r | grep 'origin/release/' | sed 's/origin\///' | sort -V | tail -n 1)
-          echo "Latest release branch: $LATEST_BRANCH"
-          echo "latest_branch=$LATEST_BRANCH" >> $GITHUB_ENV
+          LATEST_RELEASE=$(echo "${{steps.branches.outputs.result}}" | grep -o 'release/[0-9]*\.[0-9]*\.[0-9]*\.[0-9]' | sort --version-sort | tail -n1 | grep -o '[0-9]*\.[0-9]*\.[0-9]*\.[0-9]')
+          echo "LATEST_RELEASE=${LATEST_RELEASE}" >> $GITHUB_ENV
 
       - name: Create Pull Request using GitHub CLI
         id: create_pr
         run: |
           PR_URL=$(gh pr create \
-            --head "${{ env.latest_branch }}" \
+            --head "${NEXT_RELEASE}" \
             --base main \
             --title "Merge ${{ env.latest_branch }} into main" \
             --body "Automated PR to merge the latest release branch into main." \
