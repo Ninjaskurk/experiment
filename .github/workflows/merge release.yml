@@ -39,6 +39,7 @@ jobs:
 
       - name: Create Pull Request
         uses: actions/github-script@v7
+        id: create_pr
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -53,10 +54,9 @@ jobs:
               base,
               body: "This PR was created automatically by GitHub Actions."
             });
-            console.log(`Pull request created successfully: ${pull.html_url}`);
-            echo "PULL_REQUEST=${pull.html_url}" >> $GITHUB_ENV
+            return pull.html_url
 
       - name: Auto-merge PR if checks pass
         if: env.pr_number != ''
         run: |
-          gh pr merge ${PULL_REQUEST} --auto --no-ff
+          gh pr merge "${{steps.create_pr.outputs.result}}" --auto --no-ff
