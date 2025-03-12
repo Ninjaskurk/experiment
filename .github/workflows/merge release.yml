@@ -1,0 +1,41 @@
+name: Auto Merge Latest Release
+
+on:
+  workflow_dispatch:  # Allows manual triggering
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  create-and-merge-pr:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get latest release branch
+        id: get_latest_release
+        run: |
+          LATEST_BRANCH=$(git branch -r | grep 'origin/release-' | sed 's/origin\///' | sort -V | tail -n 1)
+          echo "Latest release branch: $LATEST_BRANCH"
+          echo "latest_branch=$LATEST_BRANCH" >> $GITHUB_ENV
+
+      - name: Create PR
+        id: create_pr
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: ${{ env.latest_branch }}
+          base: main
+          title: "Merge ${{ env.latest_branch }} into main"
+          body: "Automated PR to merge the latest release branch into main."
+          labels: auto-merge
+          draft: false
+
+      - name: Enable auto-merge
+        if: steps.create_pr.outputs.pull-request-number
+        run: |
+          gh pr merge ${{ steps.create_pr.outputs.pull-request-number }} --auto --squash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
