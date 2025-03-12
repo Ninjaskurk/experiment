@@ -26,7 +26,7 @@ jobs:
       - name: Get latest release branch
         id: get_latest_release
         run: |
-          LATEST_BRANCH=$(git branch -r | grep 'origin/release-' | sed 's/origin\///' | sort -V | tail -n 1)
+          LATEST_BRANCH=$(git branch -r | grep 'origin/release/' | sed 's/origin\///' | sort -V | tail -n 1)
           echo "Latest release branch: $LATEST_BRANCH"
           echo "latest_branch=$LATEST_BRANCH" >> $GITHUB_ENV
 
